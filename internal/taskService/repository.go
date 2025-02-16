@@ -39,7 +39,7 @@ func (r *taskRepository) UpdateTaskById(id uint, task Message) (Message, error) 
 	if task.Task != "" {
 		updateTask.Task = task.Task
 	}
-	if task.IsDone != false {
+	if task.IsDone {
 		updateTask.IsDone = task.IsDone
 	}
 	if err := r.db.Save(&updateTask).Error; err != nil {
