@@ -7,6 +7,7 @@ type TaskRepository interface {
 	GetAllTasks() ([]Message, error)
 	UpdateTaskById(id uint, task Message) (Message, error)
 	DeleteTaskById(id uint) error
+	GetTasksByUserID(userID uint) ([]Message, error)
 }
 
 type taskRepository struct {
@@ -53,4 +54,12 @@ func (r *taskRepository) DeleteTaskById(id uint) error {
 		return err
 	}
 	return nil
+}
+
+func (r *taskRepository) GetTasksByUserID(userID uint) ([]Message, error) {
+	var tasks []Message
+	if err := r.db.Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }

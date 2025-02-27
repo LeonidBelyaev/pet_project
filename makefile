@@ -21,3 +21,6 @@ lint:
 
 genUsers:
 	oapi-codegen -config openapi/.openapi -include-tags users -package users openapi/openapi.yaml > ./internal/web/users/api.gen.go
+
+genAlterMigration:
+		migrate create -ext sql -dir ./migrations alter_tasks_add_user_id

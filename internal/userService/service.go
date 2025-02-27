@@ -1,5 +1,7 @@
 package userService
 
+import "pet_project/internal/taskService"
+
 type UsersService struct {
 	repo UsersRepository
 }
@@ -22,4 +24,8 @@ func (u *UsersService) UpdateUserById(id uint, user Users) (Users, error) {
 
 func (u *UsersService) DeleteUserById(id uint) error {
 	return u.repo.DeleteUserById(id)
+}
+
+func (u *UsersService) GetTasksForUser(userID uint) ([]taskService.Message, error) {
+	return u.repo.GetTasksForUser(userID)
 }
