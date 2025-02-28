@@ -156,8 +156,9 @@ paths:
           description: User not found
   /users/{id}/tasks:
     get:
-      summary: Get all tasks for users
-      tags: -users
+      summary: Get all tasks for a user
+      tags:
+        - users
       parameters:
         - name: id
           in: path
@@ -177,13 +178,6 @@ paths:
         '404':
           description: User not found
 
-
-
-
-
-
-
-
 components:
   schemas:
     Message:
@@ -200,6 +194,9 @@ components:
           type: integer
           format: uint
           description: ID of the user who owns the task
+      required:
+        - task
+        - user_id
     Users:
       type: object
       properties:
@@ -215,11 +212,6 @@ components:
           items:
             $ref: '#/components/schemas/Message'
           description: List of tasks owned by the user
-
-
-
-
-
-
-
-
+      required:
+        - email
+        - password

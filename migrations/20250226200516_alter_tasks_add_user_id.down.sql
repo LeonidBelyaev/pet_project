@@ -1,3 +1,1 @@
-ALTER TABLE tasks DROP CONSTRAINT fk_user;
-
-ALTER TABLE tasks DROP COLUMN user_id;
+ALTER TABLE messages DROP COLUMN user_id;

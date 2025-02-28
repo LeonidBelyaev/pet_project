@@ -1,13 +1,15 @@
 package taskService
 
-import "gorm.io/gorm"
+import (
+	"errors"
+	"gorm.io/gorm"
+)
 
 type TaskRepository interface {
-	CreateTask(task Message) (Message, error)
+	CreateTask(userID uint, task Message) (Message, error)
 	GetAllTasks() ([]Message, error)
 	UpdateTaskById(id uint, task Message) (Message, error)
 	DeleteTaskById(id uint) error
-	GetTasksByUserID(userID uint) ([]Message, error)
 }
 
 type taskRepository struct {
@@ -18,7 +20,11 @@ func NewTaskRepository(db *gorm.DB) *taskRepository {
 	return &taskRepository{db: db}
 }
 
-func (r *taskRepository) CreateTask(task Message) (Message, error) {
+func (r *taskRepository) CreateTask(userID uint, task Message) (Message, error) {
+	if userID == 0 {
+		return Message{}, errors.New("userID is required")
+	}
+	task.UserID = userID
 	result := r.db.Create(&task)
 	if result.Error != nil {
 		return Message{}, result.Error
@@ -54,12 +60,4 @@ func (r *taskRepository) DeleteTaskById(id uint) error {
 		return err
 	}
 	return nil
-}
-
-func (r *taskRepository) GetTasksByUserID(userID uint) ([]Message, error) {
-	var tasks []Message
-	if err := r.db.Where("user_id = ?", userID).Find(&tasks).Error; err != nil {
-		return nil, err
-	}
-	return tasks, nil
 }

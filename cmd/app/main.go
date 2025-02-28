@@ -19,12 +19,11 @@ func main() {
 	messageRepo := taskService.NewTaskRepository(database.DB)
 	messageService := taskService.NewService(messageRepo)
 
-	messageHandler := handlers.NewHandler(messageService)
-
 	usersRepo := userService.NewUsersRepository(database.DB)
 	usersService := userService.NewUsersService(usersRepo)
 
-	usersHandler := handlers.NewUsersHandlers(usersService)
+	usersHandler := handlers.NewUsersHandlers(usersService, messageService)
+	messageHandler := handlers.NewHandler(messageService, usersService)
 
 	e := echo.New()
 	e.Use(middleware.Logger())

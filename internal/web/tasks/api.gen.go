@@ -16,9 +16,12 @@ import (
 
 // Message defines model for Message.
 type Message struct {
-	Id     *uint   `json:"id,omitempty"`
-	IsDone *bool   `json:"is_done,omitempty"`
-	Task   *string `json:"task,omitempty"`
+	Id     *uint  `json:"id,omitempty"`
+	IsDone *bool  `json:"is_done,omitempty"`
+	Task   string `json:"task"`
+
+	// UserId ID of the user who owns the task
+	UserId uint `json:"user_id"`
 }
 
 // PostApiTasksJSONRequestBody defines body for PostApiTasks for application/json ContentType.

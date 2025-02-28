@@ -5,15 +5,17 @@ import (
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"pet_project/internal/taskService"
+	"pet_project/internal/userService"
 	"pet_project/internal/web/tasks"
 )
 
 type Handler struct {
-	Service *taskService.TaskService
+	TaskService taskService.TaskService
+	UserService userService.UsersService
 }
 
 func (h *Handler) DeleteApiTasksId(ctx context.Context, request tasks.DeleteApiTasksIdRequestObject) (tasks.DeleteApiTasksIdResponseObject, error) {
-	err := h.Service.DeleteTaskById(request.Id)
+	err := h.TaskService.DeleteTaskById(request.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -27,25 +29,25 @@ func (h *Handler) PatchApiTasksId(ctx context.Context, request tasks.PatchApiTas
 	}
 
 	taskToUpdate := taskService.Message{
-		Task:   *taskRequest.Task,
+		Task:   taskRequest.Task, // Разыменовываем указатель
 		IsDone: *taskRequest.IsDone,
 	}
 
-	updatedTask, err := h.Service.UpdateTaskById(request.Id, taskToUpdate)
+	updatedTask, err := h.TaskService.UpdateTaskById(request.Id, taskToUpdate)
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "task not found")
 	}
 
 	response := tasks.PatchApiTasksId200JSONResponse{
 		Id:     &updatedTask.ID,
-		Task:   &updatedTask.Task,
+		Task:   updatedTask.Task,
 		IsDone: &updatedTask.IsDone,
 	}
 	return response, nil
 }
 
 func (h *Handler) GetApiTasks(_ context.Context, _ tasks.GetApiTasksRequestObject) (tasks.GetApiTasksResponseObject, error) {
-	allTasks, err := h.Service.GetAllTask()
+	allTasks, err := h.TaskService.GetAllTask()
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +56,7 @@ func (h *Handler) GetApiTasks(_ context.Context, _ tasks.GetApiTasksRequestObjec
 	for _, tsk := range allTasks {
 		task := tasks.Message{
 			Id:     &tsk.ID,
-			Task:   &tsk.Task,
+			Task:   tsk.Task,
 			IsDone: &tsk.IsDone,
 		}
 		response = append(response, task)
@@ -64,23 +66,32 @@ func (h *Handler) GetApiTasks(_ context.Context, _ tasks.GetApiTasksRequestObjec
 
 func (h *Handler) PostApiTasks(_ context.Context, request tasks.PostApiTasksRequestObject) (tasks.PostApiTasksResponseObject, error) {
 	taskRequest := request.Body
-	taskToCreate := taskService.Message{
-		Task:   *taskRequest.Task,
-		IsDone: *taskRequest.IsDone,
+	if taskRequest.UserId == 0 {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "user_id is required")
 	}
-	createdTask, err := h.Service.CreateTask(taskToCreate)
+
+	taskToCreate := taskService.Message{
+		Task:   taskRequest.Task,
+		IsDone: *taskRequest.IsDone,
+		UserID: taskRequest.UserId,
+	}
+	createdTask, err := h.TaskService.CreateTask(taskRequest.UserId, taskToCreate)
 
 	if err != nil {
 		return nil, err
 	}
 	response := tasks.PostApiTasks201JSONResponse{
 		Id:     &createdTask.ID,
-		Task:   &createdTask.Task,
+		Task:   createdTask.Task,
 		IsDone: &createdTask.IsDone,
+		UserId: createdTask.UserID,
 	}
 	return response, nil
 }
 
-func NewHandler(service *taskService.TaskService) *Handler {
-	return &Handler{Service: service}
+func NewHandler(taskService *taskService.TaskService, userService *userService.UsersService) *Handler {
+	return &Handler{
+		TaskService: *taskService,
+		UserService: *userService,
+	}
 }

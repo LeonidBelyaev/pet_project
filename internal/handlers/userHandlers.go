@@ -4,12 +4,33 @@ import (
 	"context"
 	"github.com/labstack/echo/v4"
 	"net/http"
+	"pet_project/internal/taskService"
 	"pet_project/internal/userService"
 	"pet_project/internal/web/users"
 )
 
 type UsersHandler struct {
 	UsersService *userService.UsersService
+	TaskService  *taskService.TaskService
+}
+
+func (u UsersHandler) GetUsersIdTasks(ctx context.Context, request users.GetUsersIdTasksRequestObject) (users.GetUsersIdTasksResponseObject, error) {
+	tasks, err := u.UsersService.GetTasksForUser(request.Id)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	response := users.GetUsersIdTasks200JSONResponse{}
+	for _, task := range tasks {
+		taskResponse := users.Message{
+			Id:     &task.ID,
+			Task:   task.Task,
+			IsDone: &task.IsDone,
+			UserId: task.UserID,
+		}
+		response = append(response, taskResponse)
+	}
+	return response, nil
 }
 
 func (u UsersHandler) GetUsers(ctx context.Context, request users.GetUsersRequestObject) (users.GetUsersResponseObject, error) {
@@ -21,8 +42,8 @@ func (u UsersHandler) GetUsers(ctx context.Context, request users.GetUsersReques
 	for _, usr := range allUsers {
 		user := users.Users{
 			Id:       &usr.ID,
-			Email:    &usr.Email,
-			Password: &usr.Password,
+			Email:    usr.Email,
+			Password: usr.Password,
 		}
 		response = append(response, user)
 	}
@@ -32,8 +53,8 @@ func (u UsersHandler) GetUsers(ctx context.Context, request users.GetUsersReques
 func (u UsersHandler) PostUsers(ctx context.Context, request users.PostUsersRequestObject) (users.PostUsersResponseObject, error) {
 	userRequest := request.Body
 	userToCreate := userService.Users{
-		Email:    *userRequest.Email,
-		Password: *userRequest.Password,
+		Email:    userRequest.Email,
+		Password: userRequest.Password,
 	}
 	createdUser, err := u.UsersService.CreateUser(userToCreate)
 	if err != nil {
@@ -41,8 +62,8 @@ func (u UsersHandler) PostUsers(ctx context.Context, request users.PostUsersRequ
 	}
 	response := users.PostUsers201JSONResponse{
 		Id:       &createdUser.ID,
-		Email:    &createdUser.Email,
-		Password: &createdUser.Password,
+		Email:    createdUser.Email,
+		Password: createdUser.Password,
 	}
 	return response, nil
 }
@@ -61,8 +82,8 @@ func (u UsersHandler) PatchUsersId(ctx context.Context, request users.PatchUsers
 		return nil, echo.NewHTTPError(http.StatusBadRequest, "invalid request body")
 	}
 	userToUpdate := userService.Users{
-		Email:    *userRequest.Email,
-		Password: *userRequest.Password,
+		Email:    userRequest.Email,
+		Password: userRequest.Password,
 	}
 
 	updatedUser, err := u.UsersService.UpdateUserById(request.Id, userToUpdate)
@@ -71,12 +92,15 @@ func (u UsersHandler) PatchUsersId(ctx context.Context, request users.PatchUsers
 	}
 	response := users.PatchUsersId200JSONResponse{
 		Id:       &updatedUser.ID,
-		Email:    &updatedUser.Email,
-		Password: &updatedUser.Password,
+		Email:    updatedUser.Email,
+		Password: updatedUser.Password,
 	}
 	return response, nil
 }
 
-func NewUsersHandlers(userService *userService.UsersService) *UsersHandler {
-	return &UsersHandler{UsersService: userService}
+func NewUsersHandlers(userService *userService.UsersService, taskService *taskService.TaskService) *UsersHandler {
+	return &UsersHandler{
+		UsersService: userService,
+		TaskService:  taskService,
+	}
 }
